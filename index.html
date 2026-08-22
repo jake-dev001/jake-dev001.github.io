@@ -311,11 +311,61 @@
   .an-row, .an-ring, .an-nudge svg, .an-typing i, .an-wave.playing b { animation: none !important; }
 }
 
-@media (max-width: 560px) {
+/* The media element is audio-only but must be a <video> for autoplay
+   (browsers block muted <audio> autoplay, but allow muted <video>). */
+.an-media {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  left: -9999px;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 700px) {
+  .an-wrap::before { inset: 24px -16px -28px -16px; }
+  .an-head { padding: 10px 12px; gap: 8px; }
+  .an-logo { height: 26px; }
   .an-body { flex-direction: column; }
-  .an-rail { width: 100%; max-width: none; border-right: 0; border-bottom: 1px solid var(--an-line); }
-  .an-tabs { flex-direction: row; flex-wrap: wrap; }
+  .an-rail {
+    width: 100%;
+    max-width: none;
+    padding: 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--an-line);
+  }
+  .an-tabs {
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .an-tabs::-webkit-scrollbar { display: none; }
+  .an-tab { flex: 0 0 auto; padding: 10px 14px; font-size: 13px; }
+  .an-panel { padding: 12px; }
   .an-nudge span { display: none; }
+  .an-nudge svg { width: 30px; }
+  .an-unmute { padding: 10px 14px; font-size: 11px; min-height: 40px; }
+  .an-player { gap: 10px; padding: 8px 10px; }
+  .an-play { width: 42px; height: 42px; }
+  .an-wave { height: 32px; gap: 2px; }
+  .an-wave b:nth-child(even) { display: none; } /* fewer, wider bars on phones */
+  .an-chat { height: min(46vh, 340px); margin-top: 12px; }
+  .an-row { max-width: 96%; gap: 8px; }
+  .an-avatar { width: 30px; height: 30px; }
+  .an-avatar svg { width: 15px; height: 15px; }
+  .an-bubble { font-size: 13.5px; padding: 9px 12px; line-height: 1.5; }
+  .an-foot { padding: 10px 12px; }
+  .an-foot span { font-size: 11px; }
+}
+
+@media (max-width: 400px) {
+  .an-head { flex-wrap: wrap; }
+  .an-logo { height: 24px; }
+  .an-unmute { padding: 9px 12px; }
+  .an-time { font-size: 11px; }
 }
 
       body {
@@ -323,6 +373,10 @@
         padding: 64px 20px;
         background: #f7f9fc;
         font-family: "Inter", system-ui, sans-serif;
+        -webkit-text-size-adjust: 100%;
+      }
+      @media (max-width: 700px) {
+        body { padding: 24px 14px; }
       }
     </style>
   </head>
@@ -441,11 +495,11 @@ function mountCallWidget(root) {
 
       <div class="an-foot"><i></i><span>These are <strong>real calls</strong>, answered live by your AI agent — 24/7.</span></div>
     </div>
-    <audio preload="auto" playsinline muted autoplay></audio>
+    <video class="an-media" preload="auto" playsinline webkit-playsinline muted autoplay disablepictureinpicture tabindex="-1" aria-hidden="true"></video>
   `;
 
   const $ = (s) => root.querySelector(s);
-  const audio = $("audio");
+  const audio = $(".an-media");
   const wave = $(".an-wave");
   const bars = [...wave.querySelectorAll("b")];
   const chat = $(".an-chat");
@@ -511,33 +565,44 @@ function mountCallWidget(root) {
       renderChat(true);
       return;
     }
-    audio.src = CALLS[i].audio;
-    audio.currentTime = 0;
+    audio.muted = muted; /* must be muted BEFORE load for autoplay to be allowed */
+    audio.setAttribute("src", CALLS[i].audio);
+    audio.load();
     renderChat(true);
     tryAutoplay();
   }
 
-  /* Robust muted autoplay: browsers only allow autoplay while muted, and may
-     reject play() until the media is ready or the tab is visible. Retry on
-     readiness events and, as a last resort, on the first user interaction. */
+  /* Robust muted autoplay.
+     Why the media element is a <video>: Chrome, Edge and Safari block autoplay
+     of <audio> even when muted, but allow muted+playsinline <video>. The file
+     is audio-only, so the (hidden, 1px) video behaves exactly like audio.
+     play() can still be rejected until the media is ready, the tab is visible,
+     or (iOS low-power mode) a gesture happens — so retry on all of those. */
   function tryAutoplay() {
     if (!CALLS[current].audio) return;
     audio.muted = muted;
-    const attempt = () => audio.play().catch(() => {});
+    const attempt = () => {
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {});
+    };
     attempt();
-    audio.addEventListener("loadedmetadata", attempt, { once: true });
-    audio.addEventListener("canplay", attempt, { once: true });
+    ["loadeddata", "loadedmetadata", "canplay", "canplaythrough"].forEach((ev) =>
+      audio.addEventListener(ev, attempt, { once: true })
+    );
+    /* A few delayed retries cover slow metadata and late policy decisions. */
+    [150, 600, 1500].forEach((ms) => setTimeout(() => { if (audio.paused) attempt(); }, ms));
     if (!autoplayHooked) {
       autoplayHooked = true;
       const onGesture = () => {
         if (audio.paused) attempt();
       };
-      ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
+      ["pointerdown", "touchstart", "touchend", "keydown", "scroll"].forEach((ev) =>
         document.addEventListener(ev, onGesture, { passive: true })
       );
       document.addEventListener("visibilitychange", () => {
         if (!document.hidden && audio.paused) attempt();
       });
+      window.addEventListener("pageshow", onGesture);
     }
   }
 
