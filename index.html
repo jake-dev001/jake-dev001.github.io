@@ -311,6 +311,8 @@
   .an-row, .an-ring, .an-nudge svg, .an-typing i, .an-wave.playing b { animation: none !important; }
 }
 
+/* The media element is audio-only but must be a <video> for autoplay
+   (browsers block muted <audio> autoplay, but allow muted <video>). */
 .an-media {
   position: absolute;
   width: 1px;
@@ -381,6 +383,10 @@
   <body>
     <div data-an-widget></div>
     <script>
+/* AnsweringNow.AI — Live Call Widget (standalone, no dependencies)
+ *
+ * TO ADD A TAB: append an object to the CALLS array below. See README.md.
+ */
 
 const LOGO =
   "AnsweringNowAI-Logo.webp";
@@ -415,27 +421,7 @@ const CALLS = [
       { t: 83.0, who: "agent", text: "You're welcome, Sarah. Have a nice day." },
     ],
   },
-    { 
-    id: "appointment", 
-    label: "Appointment", 
-    audio: "AI%Agent%Conversation%2%CS.mp3", 
-    lines: [
-      { t: 0.0, who: "agent", text: "Thank you for calling Ridge Roofing. This is Jessica. How can I help you today?" },
-{ t: 0.0, who: "caller", text: "Hey, we recently had a storm come through and I think part of my roof may be damaged. I wanted to schedule a time for somebody to come out for an inspection." },
-{ t: 0.0, who: "agent", text: "Got it. Storm damage is definitely something the team can take a closer look at. We have openings this afternoon on August 11th at 2 PM, 2:30 PM and 3 PM. Which time would you like to go with?" },
-{ t: 0.0, who: "caller", text: "Can we do the 3 o'clock today?" },
-{ t: 0.0, who: "agent", text: "All right. We'll go with today at 3 PM. First, I have your phone number as [phone number]. Is that correct?" },
-{ t: 0.0, who: "caller", text: "Yes, that's it." },
-{ t: 0.0, who: "agent", text: "Great, thanks. Can I get your name for the appointment?" },
-{ t: 0.0, who: "caller", text: "My name is John." },
-{ t: 0.0, who: "agent", text: "Thanks, John. Do you have an email you'd like us to use for the confirmation?" },
-{ t: 0.0, who: "caller", text: "Yes, my email is [email] at gmail.com." },
-{ t: 0.0, who: "agent", text: "Got it. Thank you. And what's the full address for the inspection, including city, state and ZIP?" },
-{ t: 0.0, who: "caller", text: "My address is [address]." },
-{ t: 0.0, who: "agent", text: "All right, I've got that down for today, Tuesday, August 11th at 3 PM for an inspection. I'll get that tentatively scheduled, and the team will confirm with you before it's fully locked in." },
-    ] 
-  },
-    
+  { id: "appointment", label: "Appointment", audio: "", lines: [] },
   { id: "callback", label: "Callback", audio: "", lines: [] },
 ];
 
