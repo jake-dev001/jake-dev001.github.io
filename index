@@ -335,14 +335,14 @@
  */
 
 const LOGO =
-  "https://project--e4ed065d-4876-428b-9559-7e80cbe75223.lovable.app/__l5e/assets-v1/99811b36-2af7-4c14-bfd8-b87dcda05dd2/AnsweringNowAI-Logo.webp";
+  "https://github.com/jake-dev001/portfolio/blob/main/AnsweringNowAI-Logo.webp";
 
 const CALLS = [
   {
     id: "query",
     label: "Query",
     audio:
-      "https://project--e4ed065d-4876-428b-9559-7e80cbe75223.lovable.app/__l5e/assets-v1/a2c0aeb1-38bc-4f58-968e-e87cfbbb170a/AI_Agent_Conversation.mp3",
+      "https://github.com/jake-dev001/portfolio/blob/main/AI%20Agent%20Conversation.mp3",
     lines: [
       { t: 0.0, who: "agent", text: "Hi, thanks for calling the salon. This is Mia. How can I help today?" },
       { t: 4.9, who: "caller", text: "Hi, so I had a couple of questions. Do you, um, do hair colour?" },
