@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AnsweringNow.AI — Live Call Widget</title>
+    <meta name="description" content="Live AI receptionist call demo: play a real conversation with a synced transcript." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+/* AnsweringNow.AI — Live Call Widget (standalone)
+   All colours live here as CSS variables. */
+
+:root {
+  --an-blue: #4f7fd6;
+  --an-green: #b7e04a;
+  --an-ink: #1e293b;
+  --an-muted: #6b7280;
+  --an-line: #e6eaf0;
+  --an-agent-bg: #eef8dd;
+  --an-caller-bg: #eaf1fb;
+  --an-rail: #f6f8fb;
+  --an-card: #ffffff;
+  --an-radius: 22px;
+  --an-font: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}
+
+.an-wrap * { box-sizing: border-box; }
+
+.an-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  font-family: var(--an-font);
+  color: var(--an-ink);
+}
+
+/* Subtle glow, strongest at the bottom, capped at 25% */
+.an-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 32px -40px -48px -40px;
+  border-radius: 48px;
+  background: linear-gradient(
+    to bottom,
+    rgba(79, 127, 214, 0.1),
+    rgba(79, 127, 214, 0.25)
+  );
+  filter: blur(46px);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.an-card {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border: 1px solid var(--an-line);
+  border-radius: var(--an-radius);
+  background: var(--an-card);
+  box-shadow: 0 26px 70px -30px rgba(79, 127, 214, 0.25);
+}
+
+/* ---------- Header ---------- */
+.an-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--an-line);
+}
+.an-logo { height: 32px; width: auto; }
+
+.an-head-right { position: relative; display: flex; align-items: center; gap: 10px; }
+
+/* Unmute button — top right */
+.an-unmute {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--an-blue);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+.an-unmute:hover { transform: scale(1.04); }
+.an-unmute .an-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 999px;
+  border: 2px solid rgba(79, 127, 214, 0.5);
+  animation: an-ping 1.6s ease-out infinite;
+  pointer-events: none;
+}
+.an-unmute[data-muted="false"] .an-ring { display: none; }
+
+/* Curved arrow + label pointing at the unmute button */
+.an-nudge {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: -2px;
+  transform: translateY(-2px);
+  pointer-events: none;
+  color: var(--an-blue);
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+.an-nudge span {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.an-nudge svg { animation: an-nudge 1.4s ease-in-out infinite; }
+.an-unmute[data-muted="false"] ~ .an-nudge,
+.an-head-right:has(.an-unmute[data-muted="false"]) .an-nudge { opacity: 0; }
+
+/* ---------- Body ---------- */
+.an-body { display: flex; }
+
+.an-rail {
+  width: 34%;
+  max-width: 190px;
+  flex: 0 0 auto;
+  padding: 12px;
+  border-right: 1px solid var(--an-line);
+  background: var(--an-rail);
+}
+.an-tabs { display: flex; flex-direction: column; gap: 6px; }
+.an-tab {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--an-blue);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.an-tab:hover { background: var(--an-caller-bg); }
+.an-tab[aria-selected="true"] {
+  background: var(--an-green);
+  color: var(--an-ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.an-panel { flex: 1 1 auto; min-width: 0; padding: 16px; }
+
+/* ---------- Player ---------- */
+.an-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--an-caller-bg);
+}
+.an-play {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--an-blue);
+  color: #fff;
+  cursor: pointer;
+}
+.an-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+  cursor: pointer;
+}
+.an-wave b {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 2px;
+  border-radius: 999px;
+  background: rgba(79, 127, 214, 0.25);
+  transform-origin: center;
+}
+.an-wave b.on { background: var(--an-green); }
+.an-wave.playing b { animation: an-bar 0.62s ease-in-out infinite; }
+.an-time {
+  flex: 0 0 auto;
+  font: 600 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--an-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Transcript ---------- */
+.an-chat {
+  margin-top: 16px;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.an-row {
+  display: flex;
+  gap: 10px;
+  max-width: 90%;
+  align-items: center;
+  animation: an-in 0.32s ease both;
+}
+.an-row.agent { align-self: flex-start; }
+.an-row.caller { align-self: flex-end; flex-direction: row-reverse; }
+
+.an-avatar {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.an-avatar svg { width: 18px; height: 18px; }
+.an-row.agent .an-avatar { background: var(--an-agent-bg); color: #5d8a1f; }
+.an-row.caller .an-avatar { background: var(--an-caller-bg); color: var(--an-blue); }
+
+.an-meta {
+  display: block;
+  padding: 0 4px 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--an-muted);
+}
+.an-row.caller .an-meta { text-align: right; }
+.an-bubble {
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.55;
+  border-radius: 16px;
+}
+.an-row.agent .an-bubble { background: var(--an-agent-bg); border-bottom-left-radius: 6px; }
+.an-row.caller .an-bubble { background: var(--an-caller-bg); border-bottom-right-radius: 6px; }
+
+.an-typing { display: flex; gap: 6px; padding: 12px 14px; border-radius: 16px; }
+.an-typing.agent { align-self: flex-start; background: var(--an-agent-bg); }
+.an-typing.caller { align-self: flex-end; background: var(--an-caller-bg); }
+.an-typing i {
+  width: 6px; height: 6px; border-radius: 999px; background: var(--an-muted);
+  display: block; animation: an-dot 1.1s infinite;
+}
+.an-typing i:nth-child(2) { animation-delay: 0.15s; }
+.an-typing i:nth-child(3) { animation-delay: 0.3s; }
+
+.an-empty { margin: auto; max-width: 240px; text-align: center; font-size: 14px; color: var(--an-muted); }
+.an-empty strong { display: block; margin-bottom: 4px; color: var(--an-ink); }
+
+/* ---------- Footer ---------- */
+.an-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--an-line);
+  background: var(--an-rail);
+  text-align: center;
+}
+.an-foot i {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--an-green);
+  display: block;
+}
+.an-foot span {
+  font-size: 12px;
+  color: var(--an-muted);
+}
+.an-foot strong { color: var(--an-ink); font-weight: 700; }
+
+/* ---------- Animations ---------- */
+@keyframes an-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes an-dot { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+@keyframes an-ping { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.35); opacity: 0; } }
+@keyframes an-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+@keyframes an-bar { 0%, 100% { transform: scaleY(0.75); } 50% { transform: scaleY(1.25); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .an-row, .an-ring, .an-nudge svg, .an-typing i, .an-wave.playing b { animation: none !important; }
+}
+
+@media (max-width: 560px) {
+  .an-body { flex-direction: column; }
+  .an-rail { width: 100%; max-width: none; border-right: 0; border-bottom: 1px solid var(--an-line); }
+  .an-tabs { flex-direction: row; flex-wrap: wrap; }
+  .an-nudge span { display: none; }
+}
+
+      body {
+        margin: 0;
+        padding: 64px 20px;
+        background: #f7f9fc;
+        font-family: "Inter", system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div data-an-widget></div>
+    <script>
+/* AnsweringNow.AI — Live Call Widget (standalone, no dependencies)
+ *
+ * TO ADD A TAB: append an object to the CALLS array below. See README.md.
+ */
+
+const LOGO =
+  "https://project--e4ed065d-4876-428b-9559-7e80cbe75223.lovable.app/__l5e/assets-v1/99811b36-2af7-4c14-bfd8-b87dcda05dd2/AnsweringNowAI-Logo.webp";
+
+const CALLS = [
+  {
+    id: "query",
+    label: "Query",
+    audio:
+      "https://project--e4ed065d-4876-428b-9559-7e80cbe75223.lovable.app/__l5e/assets-v1/a2c0aeb1-38bc-4f58-968e-e87cfbbb170a/AI_Agent_Conversation.mp3",
+    lines: [
+      { t: 0.0, who: "agent", text: "Hi, thanks for calling the salon. This is Mia. How can I help today?" },
+      { t: 4.9, who: "caller", text: "Hi, so I had a couple of questions. Do you, um, do hair colour?" },
+      { t: 10.7, who: "agent", text: "Yes, we do hair colour appointments — full colour, root touch-ups, highlights and colour refreshes." },
+      { t: 17.7, who: "caller", text: "Okay, okay. And can I add a trim with that?" },
+      { t: 21.8, who: "agent", text: "Yes, a trim can usually be added with a colour appointment." },
+      { t: 25.5, who: "caller", text: "Great, that's what I need. What are, like, your usual working hours?" },
+      { t: 30.9, who: "agent", text: "We usually open Monday to Saturday, from 9am to 6pm." },
+      { t: 35.0, who: "caller", text: "Alright, and are you open on Sunday by any chance?" },
+      { t: 39.1, who: "agent", text: "No, we're closed on Sundays." },
+      { t: 42.5, who: "caller", text: "Okay, no worries. I want to book an appointment for a hair colour then." },
+      { t: 47.3, who: "agent", text: "Sure, I can help book that in. May I please take your name?" },
+      { t: 53.0, who: "caller", text: "It's Sarah." },
+      { t: 57.2, who: "agent", text: "Thanks, Sarah. And your mobile number?" },
+      { t: 60.9, who: "caller", text: "Yep, it's on the way through now." },
+      { t: 66.1, who: "agent", text: "When would you like to come in for the appointment?" },
+      { t: 69.0, who: "caller", text: "So, um, do you have something for Saturday morning?" },
+      { t: 72.9, who: "agent", text: "Yes, for Saturday morning we have 9:30am and 11am available." },
+      { t: 77.9, who: "caller", text: "Yeah, 9:30 works." },
+      { t: 79.2, who: "agent", text: "Perfect. We'll book you for Saturday at 9:30am for hair colour. You'll receive a confirmation by text." },
+      { t: 81.1, who: "caller", text: "Amazing, thank you. I'll be there." },
+      { t: 83.0, who: "agent", text: "You're welcome, Sarah. Have a nice day." },
+    ],
+  },
+  { id: "appointment", label: "Appointment", audio: "", lines: [] },
+  { id: "callback", label: "Callback", audio: "", lines: [] },
+];
+
+/* ------------------------------------------------------------------ */
+
+const BARS = 40;
+const HEIGHTS = Array.from({ length: BARS }, (_, i) => 12 + Math.abs(Math.sin(i * 1.7)) * 18);
+
+const ICON = {
+  play: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+  muted:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>',
+  sound:
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
+  headphones:
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17v-5a9 9 0 0 1 18 0v5"/><path d="M21 18a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2z"/><path d="M3 18a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg>',
+  person:
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
+  curvedArrow:
+    '<svg width="46" height="26" viewBox="0 0 46 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6c10-4 24-2 36 8"/><path d="M32 16.5 39.5 15l-2-7.2"/></svg>',
+};
+
+const fmt = (s) => {
+  if (!isFinite(s)) s = 0;
+  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+};
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function mountCallWidget(root) {
+  let current = 0;
+  let muted = true;
+  let shown = -1;
+  let typing = null;
+
+  root.classList.add("an-wrap");
+  root.innerHTML = `
+    <div class="an-card">
+      <div class="an-head">
+        <img class="an-logo" src="${LOGO}" alt="AnsweringNow.AI — Every Conversation. Answered." />
+        <div class="an-head-right">
+          <div class="an-nudge"><span>Hear it live</span>${ICON.curvedArrow}</div>
+          <button class="an-unmute" data-muted="true" type="button">
+            <span class="an-ring"></span><span class="an-ico">${ICON.muted}</span><span class="an-txt">Unmute to hear</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="an-body">
+        <div class="an-rail">
+          <div class="an-tabs" role="tablist" aria-orientation="vertical">
+            ${CALLS.map(
+              (c, i) =>
+                `<button class="an-tab" role="tab" type="button" data-i="${i}" aria-selected="${i === 0}">${esc(c.label)}</button>`
+            ).join("")}
+          </div>
+        </div>
+
+        <div class="an-panel">
+          <div class="an-player">
+            <button class="an-play" type="button" aria-label="Play">${ICON.play}</button>
+            <div class="an-wave" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              ${HEIGHTS.map((h, i) => `<b style="height:${h}px;animation-delay:${((i % 7) * 0.09).toFixed(2)}s"></b>`).join("")}
+            </div>
+            <span class="an-time">0:00</span>
+          </div>
+          <div class="an-chat" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="an-foot"><i></i><span>These are <strong>real calls</strong>, answered live by your AI agent — 24/7.</span></div>
+    </div>
+    <audio preload="auto" playsinline muted></audio>
+  `;
+
+  const $ = (s) => root.querySelector(s);
+  const audio = $("audio");
+  const wave = $(".an-wave");
+  const bars = [...wave.querySelectorAll("b")];
+  const chat = $(".an-chat");
+  const playBtn = $(".an-play");
+  const unmute = $(".an-unmute");
+  const timeEl = $(".an-time");
+  const nudge = $(".an-nudge");
+
+  function renderChat(force) {
+    const call = CALLS[current];
+    const t = audio.currentTime || 0;
+    let n = -1;
+    while (n + 1 < call.lines.length && t >= call.lines[n + 1].t) n++;
+    const next = call.lines[n + 1];
+    const typ = next && next.t - t < 1.6 && next.t - t > 0 ? next.who : null;
+    if (!force && n === shown && typ === typing) return;
+    shown = n;
+    typing = typ;
+
+    if (!call.audio) {
+      chat.innerHTML = `<div class="an-empty"><strong>Recording coming soon</strong>A sample ${esc(
+        call.label.toLowerCase()
+      )} call will appear here shortly.</div>`;
+      return;
+    }
+
+    chat.innerHTML =
+      call.lines
+        .slice(0, shown + 1)
+        .map(
+          (l) => `
+        <div class="an-row ${l.who}">
+          <span class="an-avatar">${l.who === "agent" ? ICON.headphones : ICON.person}</span>
+          <div>
+            <span class="an-meta">${l.who === "agent" ? "AI AGENT" : "CALLER"} · ${fmt(l.t)}</span>
+            <div class="an-bubble">${esc(l.text)}</div>
+          </div>
+        </div>`
+        )
+        .join("") +
+      (typing ? `<div class="an-typing ${typing}"><i></i><i></i><i></i></div>` : "");
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function tick() {
+    const d = audio.duration || 0;
+    const pct = d ? audio.currentTime / d : 0;
+    bars.forEach((b, i) => b.classList.toggle("on", i / BARS <= pct));
+    wave.setAttribute("aria-valuenow", Math.round(pct * 100));
+    timeEl.textContent = fmt(audio.currentTime || 0);
+    renderChat(false);
+  }
+
+  function select(i) {
+    current = i;
+    root.querySelectorAll(".an-tab").forEach((b, k) => b.setAttribute("aria-selected", String(k === i)));
+    audio.pause();
+    if (!CALLS[i].audio) {
+      audio.removeAttribute("src");
+      audio.load();
+      timeEl.textContent = "0:00";
+      bars.forEach((b) => b.classList.remove("on"));
+      renderChat(true);
+      return;
+    }
+    audio.src = CALLS[i].audio;
+    audio.currentTime = 0;
+    renderChat(true);
+    audio.play().catch(() => {});
+  }
+
+  root.querySelectorAll(".an-tab").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.i))));
+
+  playBtn.addEventListener("click", () => {
+    if (!CALLS[current].audio) return;
+    audio.paused ? audio.play().catch(() => {}) : audio.pause();
+  });
+
+  unmute.addEventListener("click", () => {
+    muted = !audio.muted ? true : false;
+    audio.muted = muted;
+    unmute.dataset.muted = String(muted);
+    unmute.querySelector(".an-ico").innerHTML = muted ? ICON.muted : ICON.sound;
+    unmute.querySelector(".an-txt").textContent = muted ? "Unmute to hear" : "Playing";
+    nudge.style.opacity = muted ? "1" : "0";
+    if (!muted) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
+  });
+
+  wave.addEventListener("click", (e) => {
+    if (!audio.duration) return;
+    const r = wave.getBoundingClientRect();
+    audio.currentTime = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * audio.duration;
+    tick();
+  });
+
+  audio.addEventListener("timeupdate", tick);
+  audio.addEventListener("play", () => {
+    wave.classList.add("playing");
+    playBtn.innerHTML = ICON.pause;
+    playBtn.setAttribute("aria-label", "Pause");
+  });
+  audio.addEventListener("pause", () => {
+    wave.classList.remove("playing");
+    playBtn.innerHTML = ICON.play;
+    playBtn.setAttribute("aria-label", "Play");
+  });
+  audio.addEventListener("ended", () => {
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  });
+
+  audio.muted = true;
+  select(0);
+}
+
+document.querySelectorAll("[data-an-widget]").forEach(mountCallWidget);
+
+    </script>
+  </body>
+</html>
