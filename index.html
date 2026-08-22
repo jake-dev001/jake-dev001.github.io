@@ -402,6 +402,7 @@ function mountCallWidget(root) {
   let muted = true;
   let shown = -1;
   let typing = null;
+  let autoplayHooked = false;
 
   root.classList.add("an-wrap");
   root.innerHTML = `
@@ -411,7 +412,7 @@ function mountCallWidget(root) {
         <div class="an-head-right">
           <div class="an-nudge"><span>Hear it live</span>${ICON.curvedArrow}</div>
           <button class="an-unmute" data-muted="true" type="button">
-            <span class="an-ring"></span><span class="an-ico">${ICON.muted}</span><span class="an-txt">Unmute to hear</span>
+            <span class="an-ring"></span><span class="an-ico">${ICON.muted}</span><span class="an-txt">Unmute</span>
           </button>
         </div>
       </div>
@@ -440,7 +441,7 @@ function mountCallWidget(root) {
 
       <div class="an-foot"><i></i><span>These are <strong>real calls</strong>, answered live by your AI agent — 24/7.</span></div>
     </div>
-    <audio preload="auto" playsinline muted></audio>
+    <audio preload="auto" playsinline muted autoplay></audio>
   `;
 
   const $ = (s) => root.querySelector(s);
@@ -513,7 +514,31 @@ function mountCallWidget(root) {
     audio.src = CALLS[i].audio;
     audio.currentTime = 0;
     renderChat(true);
-    audio.play().catch(() => {});
+    tryAutoplay();
+  }
+
+  /* Robust muted autoplay: browsers only allow autoplay while muted, and may
+     reject play() until the media is ready or the tab is visible. Retry on
+     readiness events and, as a last resort, on the first user interaction. */
+  function tryAutoplay() {
+    if (!CALLS[current].audio) return;
+    audio.muted = muted;
+    const attempt = () => audio.play().catch(() => {});
+    attempt();
+    audio.addEventListener("loadedmetadata", attempt, { once: true });
+    audio.addEventListener("canplay", attempt, { once: true });
+    if (!autoplayHooked) {
+      autoplayHooked = true;
+      const onGesture = () => {
+        if (audio.paused) attempt();
+      };
+      ["pointerdown", "keydown", "touchstart"].forEach((ev) =>
+        document.addEventListener(ev, onGesture, { passive: true })
+      );
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && audio.paused) attempt();
+      });
+    }
   }
 
   root.querySelectorAll(".an-tab").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.i))));
@@ -524,16 +549,14 @@ function mountCallWidget(root) {
   });
 
   unmute.addEventListener("click", () => {
-    muted = !audio.muted ? true : false;
+    /* Toggle sound only — never touch currentTime, never restart playback. */
+    muted = !muted;
     audio.muted = muted;
     unmute.dataset.muted = String(muted);
     unmute.querySelector(".an-ico").innerHTML = muted ? ICON.muted : ICON.sound;
-    unmute.querySelector(".an-txt").textContent = muted ? "Unmute to hear" : "Playing";
+    unmute.querySelector(".an-txt").textContent = muted ? "Unmute" : "Mute";
     nudge.style.opacity = muted ? "1" : "0";
-    if (!muted) {
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    }
+    if (audio.paused && CALLS[current].audio) audio.play().catch(() => {});
   });
 
   wave.addEventListener("click", (e) => {
