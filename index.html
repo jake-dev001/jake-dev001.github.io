@@ -334,13 +334,15 @@
  * TO ADD A TAB: append an object to the CALLS array below. See README.md.
  */
 
-const LOGO = "AnsweringNowAI-Logo.webp";
+const LOGO =
+  "AnsweringNowAI-Logo.webp";
 
 const CALLS = [
   {
     id: "query",
     label: "Query",
-    audio: "AI%20Agent%20Conversation.mp3",
+    audio:
+      "AI%20Agent%20Conversation.mp3",
     lines: [
       { t: 0.0, who: "agent", text: "Hi, thanks for calling the salon. This is Mia. How can I help today?" },
       { t: 4.9, who: "caller", text: "Hi, so I had a couple of questions. Do you, um, do hair colour?" },
@@ -438,7 +440,7 @@ function mountCallWidget(root) {
 
       <div class="an-foot"><i></i><span>These are <strong>real calls</strong>, answered live by your AI agent — 24/7.</span></div>
     </div>
-    <audio preload="auto" playsinline muted autoplay></audio>
+    <audio preload="auto" playsinline muted></audio>
   `;
 
   const $ = (s) => root.querySelector(s);
@@ -511,17 +513,7 @@ function mountCallWidget(root) {
     audio.src = CALLS[i].audio;
     audio.currentTime = 0;
     renderChat(true);
-    attemptPlay();
-  }
-
-  function attemptPlay() {
-    const p = audio.play();
-    if (p && p.catch) {
-      p.catch(() => {
-        // Not ready yet / blocked — retry once the browser says it can actually play.
-        audio.addEventListener("canplay", () => audio.play().catch(() => {}), { once: true });
-      });
-    }
+    audio.play().catch(() => {});
   }
 
   root.querySelectorAll(".an-tab").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.i))));
@@ -538,6 +530,10 @@ function mountCallWidget(root) {
     unmute.querySelector(".an-ico").innerHTML = muted ? ICON.muted : ICON.sound;
     unmute.querySelector(".an-txt").textContent = muted ? "Unmute to hear" : "Playing";
     nudge.style.opacity = muted ? "1" : "0";
+    if (!muted) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
   });
 
   wave.addEventListener("click", (e) => {
