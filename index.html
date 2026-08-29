@@ -7,13 +7,14 @@
     <meta name="description" content="Live AI receptionist call demo: play a real conversation with a synced transcript." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Caveat:wght@600;700&display=swap" rel="stylesheet" />
     <style>
 /* AnsweringNow.AI — Live Call Widget (standalone)
    All colours live here as CSS variables. */
 
 :root {
   --an-blue: #4f7fd6;
+  --an-red: #e5484d;
   --an-green: #b7e04a;
   --an-ink: #1e293b;
   --an-muted: #6b7280;
@@ -23,7 +24,8 @@
   --an-rail: #f6f8fb;
   --an-card: #ffffff;
   --an-radius: 22px;
-  --an-font: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+--an-font: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --an-nudge-font: "Caveat", "Segoe Script", "Bradley Hand", cursive;
 }
 
 .an-wrap * { box-sizing: border-box; }
@@ -111,19 +113,18 @@
 .an-nudge {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   margin-right: -2px;
-  transform: translateY(-2px);
   pointer-events: none;
-  color: var(--an-blue);
-  white-space: nowrap;
+  color: var(--an-red);
   transition: opacity 0.2s ease;
 }
 .an-nudge span {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-family: var(--an-nudge-font);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
 }
 .an-nudge svg { animation: an-nudge 1.4s ease-in-out infinite; }
 .an-unmute[data-muted="false"] ~ .an-nudge,
@@ -465,7 +466,7 @@ function mountCallWidget(root) {
       <div class="an-head">
         <img class="an-logo" src="${LOGO}" alt="AnsweringNow.AI — Every Conversation. Answered." />
         <div class="an-head-right">
-          <div class="an-nudge"><span>Hear it live</span>${ICON.curvedArrow}</div>
+<div class="an-nudge"><span>Unmute to hear<br />sample calls</span>${ICON.curvedArrow}</div>
           <button class="an-unmute" data-muted="true" type="button">
             <span class="an-ring"></span><span class="an-ico">${ICON.muted}</span><span class="an-txt">Unmute</span>
           </button>
@@ -645,7 +646,7 @@ function mountCallWidget(root) {
   });
   audio.addEventListener("ended", () => {
     audio.currentTime = 0;
-    audio.play().catch(() => {});
+    tick();
   });
 
   audio.muted = true;
