@@ -125,8 +125,10 @@
   font-weight: 700;
   line-height: 1.1;
   text-align: center;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
-.an-nudge svg { animation: an-nudge 1.4s ease-in-out infinite; }
+.an-nudge svg { flex-shrink: 0; animation: an-nudge 1.4s ease-in-out infinite; }
 .an-unmute[data-muted="false"] ~ .an-nudge,
 .an-head-right:has(.an-unmute[data-muted="false"]) .an-nudge { opacity: 0; }
 
@@ -422,9 +424,12 @@ const CALLS = [
       { t: 83.0, who: "agent", text: "You're welcome, Sarah. Have a nice day." },
     ],
   },
-  { id: "appointment", label: "Appointment", audio: "", lines: [] },
-  { id: "callback", label: "Callback", audio: "", lines: [] },
-  { id: "realestate", label: "Real Estate", audio: "", lines: [] },
+  { id: "plumbing", label: "Plumbing", audio: "plumbing-phone-audio.mp3", lines: [] },
+  { id: "hairsalon", label: "Hair Salon", audio: "hair-stylist-audio.mp3", lines: [] },
+  { id: "realestate", label: "Real Estate", audio: "real-estate-audio.mp3", lines: [] },
+  { id: "skincare", label: "Skincare", audio: "skincare-audio.mp3", lines: [] },
+  { id: "doggrooming", label: "Dog Grooming", audio: "dog-groomin-audio.mp3", lines: [] },
+  { id: "nailsalon", label: "Nail Salon", audio: "nail-salon-audio.mp3", lines: [] },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -515,14 +520,13 @@ function mountCallWidget(root) {
     const t = audio.currentTime || 0;
     let n = -1;
     while (n + 1 < call.lines.length && t >= call.lines[n + 1].t) n++;
-    const next = call.lines[n + 1];
-    const typ = next && next.t - t < 1.6 && next.t - t > 0 ? next.who : null;
+    const typ = null; /* no thinking animation — lines appear in sync with the audio */
     if (!force && n === shown && typ === typing) return;
     shown = n;
     typing = typ;
 
-    if (!call.audio) {
-      chat.innerHTML = `<div class="an-empty"><strong>Recording coming soon</strong>A sample ${esc(
+    if (!call.lines.length) {
+      chat.innerHTML = `<div class="an-empty"><strong>Transcript coming soon</strong>The synced transcript for this ${esc(
         call.label.toLowerCase()
       )} call will appear here shortly.</div>`;
       return;
@@ -541,8 +545,7 @@ function mountCallWidget(root) {
           </div>
         </div>`
         )
-        .join("") +
-      (typing ? `<div class="an-typing ${typing}"><i></i><i></i><i></i></div>` : "");
+        .join("");
     chat.scrollTop = chat.scrollHeight;
   }
 
