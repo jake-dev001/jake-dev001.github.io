@@ -7,11 +7,10 @@
     <meta name="description" content="Live AI receptionist call demo: play a real conversation with a synced transcript." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Caveat:wght@600;700&display=swap" rel="stylesheet" />
-    <style>
-/* AnsweringNow.AI — Live Call Widget (standalone)
-   All colours live here as CSS variables. */
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Caveat:wght@600;700&display=swap" rel="stylesheet" />
 
+    <!-- ============ CSS STARTS HERE ============ -->
+    <style>
 :root {
   --an-blue: #4f7fd6;
   --an-red: #e5484d;
@@ -24,7 +23,7 @@
   --an-rail: #f6f8fb;
   --an-card: #ffffff;
   --an-radius: 22px;
---an-font: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --an-font: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
   --an-nudge-font: "Caveat", "Segoe Script", "Bradley Hand", cursive;
 }
 
@@ -39,7 +38,6 @@
   color: var(--an-ink);
 }
 
-/* Subtle glow, strongest at the bottom, capped at 25% */
 .an-wrap::before {
   content: "";
   position: absolute;
@@ -66,7 +64,6 @@
   box-shadow: 0 26px 70px -30px rgba(79, 127, 214, 0.25);
 }
 
-/* ---------- Header ---------- */
 .an-head {
   display: flex;
   align-items: center;
@@ -79,7 +76,6 @@
 
 .an-head-right { position: relative; display: flex; align-items: center; gap: 10px; }
 
-/* Unmute button — top right */
 .an-unmute {
   position: relative;
   display: inline-flex;
@@ -109,7 +105,6 @@
 }
 .an-unmute[data-muted="false"] .an-ring { display: none; }
 
-/* Curved arrow + label pointing at the unmute button */
 .an-nudge {
   display: flex;
   align-items: center;
@@ -132,7 +127,6 @@
 .an-unmute[data-muted="false"] ~ .an-nudge,
 .an-head-right:has(.an-unmute[data-muted="false"]) .an-nudge { opacity: 0; }
 
-/* ---------- Body ---------- */
 .an-body { display: flex; }
 
 .an-rail {
@@ -166,7 +160,6 @@
 
 .an-panel { flex: 1 1 auto; min-width: 0; padding: 16px; }
 
-/* ---------- Player ---------- */
 .an-player {
   display: flex;
   align-items: center;
@@ -214,7 +207,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Transcript ---------- */
 .an-chat {
   margin-top: 16px;
   height: 300px;
@@ -242,9 +234,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--an-line);
+  background: var(--an-card);
 }
 .an-avatar svg { width: 18px; height: 18px; }
-.an-avatar { overflow: hidden; border: 1px solid var(--an-line); background: var(--an-card); }
 .an-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .an-row.agent .an-avatar { background: var(--an-agent-bg); color: #5d8a1f; }
 .an-row.caller .an-avatar { background: var(--an-caller-bg); color: var(--an-blue); }
@@ -280,7 +274,6 @@
 .an-empty { margin: auto; max-width: 240px; text-align: center; font-size: 14px; color: var(--an-muted); }
 .an-empty strong { display: block; margin-bottom: 4px; color: var(--an-ink); }
 
-/* ---------- Footer ---------- */
 .an-foot {
   display: flex;
   align-items: center;
@@ -305,7 +298,6 @@
 }
 .an-foot strong { color: var(--an-ink); font-weight: 700; }
 
-/* ---------- Animations ---------- */
 @keyframes an-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes an-dot { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
 @keyframes an-ping { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.35); opacity: 0; } }
@@ -316,8 +308,6 @@
   .an-row, .an-ring, .an-nudge svg, .an-typing i, .an-wave.playing b { animation: none !important; }
 }
 
-/* The media element is audio-only but must be a <video> for autoplay
-   (browsers block muted <audio> autoplay, but allow muted <video>). */
 .an-media {
   position: absolute;
   width: 1px;
@@ -327,11 +317,10 @@
   left: -9999px;
 }
 
-/* ---------- Mobile ---------- */
 @media (max-width: 700px) {
   .an-wrap::before { inset: 24px -16px -28px -16px; }
-  .an-head { padding: 10px 12px; gap: 8px; }
-  .an-logo { height: 26px; }
+  .an-head { padding: 10px 12px; gap: 8px; flex-wrap: wrap; row-gap: 8px; }
+  .an-logo { height: 26px; flex: 0 0 auto; }
   .an-body { flex-direction: column; }
   .an-rail {
     width: 100%;
@@ -350,10 +339,6 @@
   .an-tabs::-webkit-scrollbar { display: none; }
   .an-tab { flex: 0 0 auto; padding: 10px 14px; font-size: 13px; }
   .an-panel { padding: 12px; }
-  /* Keep the full "Unmute to hear sample calls" CTA on phones: the header
-     wraps so the nudge + button get their own full-width row. */
-  .an-head { flex-wrap: wrap; row-gap: 8px; }
-  .an-logo { flex: 0 0 auto; }
   .an-head-right { flex: 1 1 100%; justify-content: flex-end; gap: 8px; }
   .an-nudge { display: flex; }
   .an-nudge span { display: block; font-size: 15px; }
@@ -362,7 +347,7 @@
   .an-player { gap: 10px; padding: 8px 10px; }
   .an-play { width: 42px; height: 42px; }
   .an-wave { height: 32px; gap: 2px; }
-  .an-wave b:nth-child(even) { display: none; } /* fewer, wider bars on phones */
+  .an-wave b:nth-child(even) { display: none; }
   .an-chat { height: min(46vh, 340px); margin-top: 12px; }
   .an-row { max-width: 96%; gap: 8px; }
   .an-avatar { width: 30px; height: 30px; }
@@ -381,31 +366,30 @@
   .an-time { font-size: 11px; }
 }
 
-      body {
-        margin: 0;
-        padding: 64px 20px;
-        background: #f7f9fc;
-        font-family: "Inter", system-ui, sans-serif;
-        -webkit-text-size-adjust: 100%;
-      }
-      @media (max-width: 700px) {
-        body { padding: 24px 14px; }
-      }
+body {
+  margin: 0;
+  padding: 64px 20px;
+  background: #f7f9fc;
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+@media (max-width: 700px) {
+  body { padding: 24px 14px; }
+}
     </style>
   </head>
   <body>
     <div data-an-widget></div>
+
+    <!-- ============ JAVASCRIPT STARTS HERE ============ -->
     <script>
-/* AnsweringNow.AI — Live Call Widget (standalone, no dependencies)
- *
- * TO ADD A TAB: append an object to the CALLS array below. See README.md.
- */
+const LOGO = "AnsweringNowAI-Logo.webp";
+const AGENT_AVATAR = "AnsweringNowAI-Logo-Icon.jpg";
+const CALLER_AVATAR = "caller-woman.png";
 
-const LOGO =
-  "AnsweringNowAI-Logo.webp";
-
+// ============ TRANSCRIPTION / CALL DATA IS ADDED HERE ============
 const CALLS = [
-  { id: "plumbing", label: "Plumbing", audio: "plumbing-phone-audio.mp3", lines: [
+  { id: "plumbing", label: "Plumbing", audio: "plumbing-phone-audio.mp3", callerAvatar: "caller-woman.png", lines: [
 { t: 0.0, who: "agent", text: "Thank you for calling Reliable Plumbing. This is Sarah, the AI receptionist and I can help answer questions about our services, check availability and can even help you book an appointment. How can I help you today?" },
 { t: 12.0, who: "caller", text: "Hi there. I have a leak under my bathroom sink and it looks like it's getting worse." },
 { t: 18.0, who: "agent", text: "I'm sorry to hear that. Is the water leaking continuously right now?" },
@@ -430,7 +414,7 @@ const CALLS = [
 { t: 133.0, who: "caller", text: "You too. Bye." },
 { t: 135.0, who: "agent", text: "Goodbye." },
   ] },
-  { id: "hairsalon", label: "Hair Salon", audio: "hair-stylist-audio.mp3", lines: [
+  { id: "hairsalon", label: "Hair Salon", audio: "hair-stylist-audio.mp3", callerAvatar: "caller-woman.png", lines: [
 { t: 0.0, who: "agent", text: "Thank you for calling Bella Hair Studio. I'm Ashley, the AI Receptionist for Bella. She is currently with a client or not available right now, but I can help answer any questions about our services and pricing, check availability or even book an appointment for you. How can I help you today?" },
 { t: 18.0, who: "caller", text: "Hi, I'm looking for a new hairstylist and I wanted to ask about getting highlights." },
 { t: 22.0, who: "agent", text: "Absolutely. I'd love to help. Are you looking for full highlights, partial highlights or something like a balayage?" },
@@ -451,32 +435,10 @@ const CALLS = [
 { t: 96.0, who: "caller", text: "Nope, that's it." },
 { t: 97.0, who: "agent", text: "Great. Thanks for calling Bella Hair Studio. Have a wonderful day. You too. Bye. Goodbye." },
   ] },
-  { id: "realestate", label: "Real Estate", audio: "real-estate-audio.mp3", lines: [
-{ t: 0.0, who: "agent", text: "Thank you for calling Premier Realty. I'm Ashley. Jennifer Williams, AI Receptionist. I'm here to answer any questions you may have and can even help you schedule an appointment with Jennifer. How can I help you today?" },
-{ t: 12.0, who: "caller", text: "Hi there. I was driving by in the neighborhood and saw Jennifer's real estate sign. I'm looking for a local real estate agent to help us buy our first home." },
-{ t: 22.0, who: "agent", text: "That's exciting. Congratulations on taking the first step toward buying your first home. Jennifer loves working with first time home buyers and would be happy to guide you through the process. Is there a particular area you're interested in?" },
-{ t: 35.0, who: "caller", text: "Yes, my wife and I was thinking somewhere around Los Angeles area." },
-{ t: 40.0, who: "agent", text: "Great. And do you have an idea of what type of home you're looking for?" },
-{ t: 44.0, who: "caller", text: "Probably a three bedroom small house or townhome. I'm hoping to stay under $850,000 if possible." },
-{ t: 53.0, who: "agent", text: "Perfect. And have you already spoken with a lender or been pre approved for a mortgage?" },
-{ t: 58.0, who: "caller", text: "Not yet. I'm actually not sure where to start." },
-{ t: 62.0, who: "agent", text: "No problem at all. Jennifer can walk you through the home buying process and if needed, connect you with a lender who can help you understand your financing options." },
-{ t: 71.0, who: "caller", text: "That would be great." },
-{ t: 73.0, who: "agent", text: "How soon are you hoping to purchase a home?" },
-{ t: 76.0, who: "caller", text: "Hopefully within the next two to three months." },
-{ t: 80.0, who: "agent", text: "Great. Let's schedule a quick consultation with Jennifer so you can discuss what you're looking for and your next steps. Would tomorrow at 4pm or Thursday at 11:30am Work better?" },
-{ t: 92.0, who: "caller", text: "Tomorrow at 4 would work." },
-{ t: 94.0, who: "agent", text: "Perfect. May I get your name? Sure." },
-{ t: 98.0, who: "caller", text: "It's John Davis." },
-{ t: 100.0, who: "agent", text: "Thanks John. And what's the best phone number and email address for Jennifer to reach you?" },
-{ t: 105.0, who: "caller", text: "My number is 555-818-1234 and my email is johnxample.com." },
-{ t: 114.0, who: "agent", text: "Great. I have you scheduled with Jennifer tomorrow at 4pm to discuss buying your first home in the Los Angeles area." },
-{ t: 114.0, who: "caller", text: "Perfect. Thank you for your help." },
-{ t: 114.0, who: "agent", text: "You're very welcome, John. Jennifer looks forward to speaking with you. Have a great day." },
-{ t: 114.0, who: "caller", text: "Thanks, you too. Goodbye." },
-  ] },
-  { id: "skincare", label: "Skincare", audio: "skincare-audio.mp3", lines: [] },
-  { id: "doggrooming", label: "Dog Grooming", audio: "dog-groomin-audio.mp3", lines: [ { t: 0.0, who: "agent", text: "Thank you for calling Happy Paws Grooming. I'm Jessica, the AI receptionist and I can help with questions, services or scheduling. How can I help you today?" },
+  { id: "realestate", label: "Real Estate", audio: "real-estate-audio.mp3", callerAvatar: "caller-woman.png", lines: [] },
+  { id: "skincare", label: "Skincare", audio: "skincare-audio.mp3", callerAvatar: "caller-woman.png", lines: [] },
+  { id: "doggrooming", label: "Dog Grooming", audio: "dog-groomin-audio.mp3", callerAvatar: "caller-woman.png", lines: [
+{ t: 0.0, who: "agent", text: "Thank you for calling Happy Paws Grooming. I'm Jessica, the AI receptionist and I can help with questions, services or scheduling. How can I help you today?" },
 { t: 9.0, who: "caller", text: "Hi, I'm looking to get my dog groomed and wanted to find out about your services." },
 { t: 14.0, who: "agent", text: "Sounds good. We offer full service grooming including bathing, haircuts, nail trimming, ear cleaning and brushing. What kind of dog do you have?" },
 { t: 22.0, who: "caller", text: "I have a golden retriever." },
@@ -500,10 +462,8 @@ const CALLS = [
 { t: 93.0, who: "caller", text: "You too. Bye." },
 { t: 94.0, who: "agent", text: "Goodbye." },
   ] },
-  { id: "nailsalon", label: "Nail Salon", audio: "nail-salon-audio.mp3", lines: [] },
+  { id: "nailsalon", label: "Nail Salon", audio: "nail-salon-audio.mp3", callerAvatar: "caller-woman.png", lines: [] },
 ];
-
-/* ------------------------------------------------------------------ */
 
 const BARS = 40;
 const HEIGHTS = Array.from({ length: BARS }, (_, i) => 12 + Math.abs(Math.sin(i * 1.7)) * 18);
@@ -515,10 +475,6 @@ const ICON = {
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>',
   sound:
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>',
-  headphones:
-    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17v-5a9 9 0 0 1 18 0v5"/><path d="M21 18a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2z"/><path d="M3 18a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg>',
-  person:
-    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
   curvedArrow:
     '<svg width="46" height="26" viewBox="0 0 46 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6c10-4 24-2 36 8"/><path d="M32 16.5 39.5 15l-2-7.2"/></svg>',
 };
@@ -533,7 +489,6 @@ function mountCallWidget(root) {
   let current = 0;
   let muted = true;
   let shown = -1;
-  let typing = null;
   let autoplayHooked = false;
 
   root.classList.add("an-wrap");
@@ -542,7 +497,7 @@ function mountCallWidget(root) {
       <div class="an-head">
         <img class="an-logo" src="${LOGO}" alt="AnsweringNow.AI — Every Conversation. Answered." />
         <div class="an-head-right">
-<div class="an-nudge"><span>Unmute to hear<br />sample calls</span>${ICON.curvedArrow}</div>
+          <div class="an-nudge"><span>Unmute to hear<br />sample calls</span>${ICON.curvedArrow}</div>
           <button class="an-unmute" data-muted="true" type="button">
             <span class="an-ring"></span><span class="an-ico">${ICON.muted}</span><span class="an-txt">Unmute</span>
           </button>
@@ -591,10 +546,8 @@ function mountCallWidget(root) {
     const t = audio.currentTime || 0;
     let n = -1;
     while (n + 1 < call.lines.length && t >= call.lines[n + 1].t) n++;
-    const typ = null; /* no thinking animation — lines appear in sync with the audio */
-    if (!force && n === shown && typ === typing) return;
+    if (!force && n === shown) return;
     shown = n;
-    typing = typ;
 
     if (!call.lines.length) {
       chat.innerHTML = `<div class="an-empty"><strong>Transcript coming soon</strong>The synced transcript for this ${esc(
@@ -609,7 +562,7 @@ function mountCallWidget(root) {
         .map(
           (l) => `
         <div class="an-row ${l.who}">
-          <span class="an-avatar"><img src="${l.who === "agent" ? "AnsweringNowAI-Logo-Icon.jpg" : "caller-woman.png"}" alt="${l.who === "agent" ? "AnsweringNow.AI agent" : "Caller"}" /></span>
+          <span class="an-avatar"><img src="${l.who === "agent" ? call.agentAvatar || AGENT_AVATAR : call.callerAvatar || CALLER_AVATAR}" alt="${l.who === "agent" ? "AnsweringNow.AI agent" : "Caller"}" /></span>
           <div>
             <span class="an-meta">${l.who === "agent" ? "AI AGENT" : "CALLER"} · ${fmt(l.t)}</span>
             <div class="an-bubble">${esc(l.text)}</div>
@@ -641,19 +594,13 @@ function mountCallWidget(root) {
       renderChat(true);
       return;
     }
-    audio.muted = muted; /* must be muted BEFORE load for autoplay to be allowed */
+    audio.muted = muted;
     audio.setAttribute("src", CALLS[i].audio);
     audio.load();
     renderChat(true);
     tryAutoplay();
   }
 
-  /* Robust muted autoplay.
-     Why the media element is a <video>: Chrome, Edge and Safari block autoplay
-     of <audio> even when muted, but allow muted+playsinline <video>. The file
-     is audio-only, so the (hidden, 1px) video behaves exactly like audio.
-     play() can still be rejected until the media is ready, the tab is visible,
-     or (iOS low-power mode) a gesture happens — so retry on all of those. */
   function tryAutoplay() {
     if (!CALLS[current].audio) return;
     audio.muted = muted;
@@ -665,7 +612,6 @@ function mountCallWidget(root) {
     ["loadeddata", "loadedmetadata", "canplay", "canplaythrough"].forEach((ev) =>
       audio.addEventListener(ev, attempt, { once: true })
     );
-    /* A few delayed retries cover slow metadata and late policy decisions. */
     [150, 600, 1500].forEach((ms) => setTimeout(() => { if (audio.paused) attempt(); }, ms));
     if (!autoplayHooked) {
       autoplayHooked = true;
@@ -690,7 +636,6 @@ function mountCallWidget(root) {
   });
 
   unmute.addEventListener("click", () => {
-    /* Toggle sound only — never touch currentTime, never restart playback. */
     muted = !muted;
     audio.muted = muted;
     unmute.dataset.muted = String(muted);
@@ -728,7 +673,6 @@ function mountCallWidget(root) {
 }
 
 document.querySelectorAll("[data-an-widget]").forEach(mountCallWidget);
-
     </script>
   </body>
 </html>
